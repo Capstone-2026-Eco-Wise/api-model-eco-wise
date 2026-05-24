@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-model-eco-wise
+    ports:
+      - '8000:8000'
+    env_file:
+      - .env
+    restart: unless-stopped
+    # Jika Anda ingin volume untuk model agar tidak ter-copy berulang kali (opsional):
+    # volumes:
+    #   - ./model_ecowise_production.keras:/app/model_ecowise_production.keras

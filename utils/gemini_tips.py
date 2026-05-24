@@ -4,6 +4,7 @@ from infrastructure.logging import logging
 from utils.env import env_vars
 
 gemini_client = genai.Client(api_key=env_vars.get("GEMINI_API_KEY"))
+logger = logging.getLogger(__name__)
 
 
 def _get_gemini_tips(label: str) -> str:

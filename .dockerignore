@@ -1,0 +1,25 @@
+# Folder Virtual Environment
+venv/
+env/
+.venv/
+
+# Bytecode Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Git
+.git
+.gitignore
+
+# Konfigurasi Lokal
+.env
+.env.local
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# File Log
+*.log
