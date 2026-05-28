@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.ipynb_checkpoints/
+*.ipynb
+README.md
+BACKEND_GUIDE.md

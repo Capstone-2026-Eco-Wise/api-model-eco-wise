@@ -1,6 +1,6 @@
 import time
 from typing import List
-from fastapi import APIRouter, File, UploadFile, HTTPException, Request
+from fastapi import APIRouter, File, UploadFile, HTTPException, Request, Form
 
 from config.settings import MAX_FILE_SIZE_MB
 from core.gemini import get_gemini_tips
@@ -10,17 +10,23 @@ from utils.logger import logger
 
 router = APIRouter()
 
+
 def get_inference_engine(request: Request):
     return getattr(request.app.state, "inference_engine", None)
 
+
 @router.post("/predict", response_model=PredictionResult, tags=["Prediction"])
-async def predict_single(request: Request, file: UploadFile = File(...)):
+async def predict_single(
+    request: Request, file: UploadFile = File(...), token: int = Form(0)
+):
     inference_engine = get_inference_engine(request)
     if not inference_engine:
         raise HTTPException(status_code=503, detail="Model belum dimuat")
 
     validate_file(file)
     img_bytes = await file.read()
+
+    logger.info(f"TOKEN: {token}")
 
     if len(img_bytes) > MAX_FILE_SIZE_MB * 1024 * 1024:
         raise HTTPException(
@@ -33,7 +39,10 @@ async def predict_single(request: Request, file: UploadFile = File(...)):
         # Prediksi TensorFlow
         result = inference_engine.predict_from_bytes(img_bytes)
         # Prediksi Gemini
-        tips = get_gemini_tips(result["label"])
+        if token != 0:
+            tips = get_gemini_tips(result["label"])
+        else:
+            tips = "Token Anda sudah habis. Silahkan tunggu untuk mendapatkan tips daur ulang."
 
     except Exception as e:
         logger.error(f"Inference error: {e}")
@@ -55,7 +64,9 @@ async def predict_single(request: Request, file: UploadFile = File(...)):
     )
 
 
-@router.post("/predict/batch", response_model=BatchPredictionResult, tags=["Prediction"])
+@router.post(
+    "/predict/batch", response_model=BatchPredictionResult, tags=["Prediction"]
+)
 async def predict_batch(request: Request, files: List[UploadFile] = File(...)):
     inference_engine = get_inference_engine(request)
     if not inference_engine:
