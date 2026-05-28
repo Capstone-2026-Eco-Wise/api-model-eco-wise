@@ -88,8 +88,8 @@ class EcoWiseInference:
             self.class_names = data.get("class_names", DEFAULT_CLASS_NAMES)
         else:
             self.class_names = DEFAULT_CLASS_NAMES
-
-        print(f"✅ Model loaded. Kelas: {self.class_names}")
+        from utils.logger import logger
+        logger.info(f"Model loaded. Kelas: {self.class_names}")
 
     @staticmethod
     def _preprocess(img_array: np.ndarray) -> np.ndarray:
