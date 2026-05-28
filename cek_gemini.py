@@ -1,10 +1,11 @@
 from google import genai
 
-from utils.env import env_vars
+# Masukkan API Key aslimu di bawah ini
+API_KEY = "MASUKKAN API KEY ASLIMU DISINI"
 
-client = genai.Client(api_key=env_vars.get("GEMINI_API_KEY"))
+client = genai.Client(api_key=API_KEY)
 
-print("List Model yang Tersedia dari API KEY:")
+print("Daftar model yang tersedia untuk API Key kamu:")
 print("-" * 50)
 for model in client.models.list():
     # Hanya tampilkan model yang mendukung generateContent (teks)

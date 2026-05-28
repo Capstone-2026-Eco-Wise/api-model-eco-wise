@@ -10,13 +10,13 @@ Usage:
     result = engine.predict("path/to/image.jpg")
 """
 
-import io
-import json
 import os
-
+import json
 import numpy as np
-import tensorflow as tf
 from PIL import Image
+import io
+
+import tensorflow as tf
 
 # Pastikan custom objects terdaftar saat load model
 # (diperlukan karena model menggunakan ChannelAttentionLayer & FocalLoss)
@@ -27,7 +27,6 @@ class ChannelAttentionLayer(tf.keras.layers.Layer):
     Custom Layer: Channel Attention (Squeeze-and-Excitation).
     Harus terdaftar saat load model .keras.
     """
-
     def __init__(self, reduction_ratio=8, **kwargs):
         super().__init__(**kwargs)
         self.reduction_ratio = reduction_ratio
@@ -35,9 +34,10 @@ class ChannelAttentionLayer(tf.keras.layers.Layer):
     def build(self, input_shape):
         channels = input_shape[-1]
         self.fc1 = tf.keras.layers.Dense(
-            max(channels // self.reduction_ratio, 8), activation="relu", use_bias=False
-        )
-        self.fc2 = tf.keras.layers.Dense(channels, activation="sigmoid", use_bias=False)
+            max(channels // self.reduction_ratio, 8),
+            activation="relu", use_bias=False)
+        self.fc2 = tf.keras.layers.Dense(
+            channels, activation="sigmoid", use_bias=False)
         super().build(input_shape)
 
     def call(self, inputs, training=None):
@@ -53,8 +53,7 @@ class ChannelAttentionLayer(tf.keras.layers.Layer):
 
 class FocalLoss(tf.keras.losses.Loss):
     """Custom Loss: Focal Loss."""
-
-    def __init__(self, gamma=2.0, alpha=0.25, num_classes=3, **kwargs):
+    def __init__(self, gamma=2.0, alpha=0.25, num_classes=4, **kwargs):
         super().__init__(**kwargs)
         self.gamma = gamma
         self.alpha = alpha
@@ -62,25 +61,23 @@ class FocalLoss(tf.keras.losses.Loss):
 
     def call(self, y_true, y_pred):
         y_true_int = tf.cast(y_true, tf.int32)
-        y_true_oh = tf.one_hot(
+        y_true_oh  = tf.one_hot(
             tf.squeeze(y_true_int, axis=-1) if tf.rank(y_true_int) > 1 else y_true_int,
-            depth=self.num_classes,
-        )
-        y_pred = tf.clip_by_value(y_pred, 1e-7, 1.0 - 1e-7)
-        ce = -y_true_oh * tf.math.log(y_pred)
-        weight = self.alpha * y_true_oh * tf.pow(1.0 - y_pred, self.gamma)
+            depth=self.num_classes)
+        y_pred     = tf.clip_by_value(y_pred, 1e-7, 1.0 - 1e-7)
+        ce         = -y_true_oh * tf.math.log(y_pred)
+        weight     = self.alpha * y_true_oh * tf.pow(1.0 - y_pred, self.gamma)
         return tf.reduce_mean(tf.reduce_sum(weight * ce, axis=-1))
 
     def get_config(self):
         config = super().get_config()
-        config.update(
-            {"gamma": self.gamma, "alpha": self.alpha, "num_classes": self.num_classes}
-        )
+        config.update({"gamma": self.gamma, "alpha": self.alpha,
+                        "num_classes": self.num_classes})
         return config
 
 
-# ── Fallback class names jika class_names.json tidak ada ────────────────────
-DEFAULT_CLASS_NAMES = ["Anorganik", "B3", "Organik"]
+# list fallback default
+DEFAULT_CLASS_NAMES = ["Anorganik", "B3", "Non-Waste", "Organik"]
 IMG_SIZE = (224, 224)
 
 
@@ -128,32 +125,16 @@ class EcoWiseInference:
 
     # ── Predict dari file path ───────────────────────────────────────────────
     def predict(self, img_path: str) -> dict:
-        """
-        Prediksi dari path file gambar.
-
-        Returns
-        -------
-        {
-            "label": str,
-            "confidence": float (0-1),
-            "all_scores": {"Anorganik": float, "B3": float, "Organik": float}
-        }
-        """
-        img = Image.open(img_path).convert("RGB").resize(IMG_SIZE)
-        arr = np.array(img)
-        arr = self._preprocess(arr)
-        arr = np.expand_dims(arr, axis=0)  # (1, 224, 224, 3)
+        """Prediksi dari path file gambar."""
+        img       = Image.open(img_path).convert("RGB").resize(IMG_SIZE)
+        arr       = np.array(img)
+        arr       = self._preprocess(arr)
+        arr       = np.expand_dims(arr, axis=0)           # (1, 224, 224, 3)
         return self._run_inference(arr)
 
     # ── Predict dari bytes (untuk REST API upload) ────────────────────────────
     def predict_from_bytes(self, img_bytes: bytes) -> dict:
-        """
-        Prediksi dari raw bytes (cocok untuk endpoint FastAPI UploadFile).
-
-        Parameters
-        ----------
-        img_bytes : bytes hasil await file.read()
-        """
+        """Prediksi dari raw bytes (cocok untuk endpoint FastAPI UploadFile)."""
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB").resize(IMG_SIZE)
         arr = np.array(img)
         arr = self._preprocess(arr)
@@ -162,9 +143,7 @@ class EcoWiseInference:
 
     # ── Predict dari numpy array ─────────────────────────────────────────────
     def predict_from_array(self, img_array: np.ndarray) -> dict:
-        """
-        Prediksi dari numpy array (shape: H x W x 3, dtype uint8 atau float32).
-        """
+        """Prediksi dari numpy array (shape: H x W x 3, dtype uint8 atau float32)."""
         img = Image.fromarray(img_array.astype("uint8")).resize(IMG_SIZE)
         arr = np.array(img, dtype="float32")
         arr = self._preprocess(arr)
@@ -173,13 +152,16 @@ class EcoWiseInference:
 
     # ── Internal inference ───────────────────────────────────────────────────
     def _run_inference(self, batch: np.ndarray) -> dict:
-        preds = self.model.predict(batch, verbose=0)[0]  # (num_classes,)
-        pred_idx = int(np.argmax(preds))
+        # ── direct call
+        preds_tensor = self.model(batch, training=False)
+        preds        = preds_tensor.numpy()[0]   # (num_classes,)
+        pred_idx     = int(np.argmax(preds))
         return {
-            "label": self.class_names[pred_idx],
-            "confidence": float(np.max(preds)),
+            "label":      self.class_names[pred_idx],
+            "confidence": float(preds[pred_idx]),
             "all_scores": {
-                name: float(score) for name, score in zip(self.class_names, preds)
+                name: float(score)
+                for name, score in zip(self.class_names, preds)
             },
         }
 
@@ -195,9 +177,7 @@ if __name__ == "__main__":
 
     engine = EcoWiseInference(
         model_path=sys.argv[1],
-        class_names_path=(
-            "class_names.json" if os.path.exists("class_names.json") else None
-        ),
+        class_names_path="class_names.json" if os.path.exists("class_names.json") else None,
     )
     result = engine.predict(sys.argv[2])
 
