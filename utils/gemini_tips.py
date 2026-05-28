@@ -9,6 +9,10 @@ logger = logging.getLogger(__name__)
 
 def _get_gemini_tips(label: str) -> str:
     """Meminta tips dari Gemini API berdasarkan prediksi sampah."""
+
+    if label == "Non-Waste":
+        return "Objek ini bukan merupakan kategori sampah. Tidak ada tips daur ulang yang tersedia."
+
     prompt = f"Berikan 2 langkah praktis dan singkat untuk mengelola atau mendaur ulang sampah berjenis {label}. Balas dalam bahasa Indonesia yang ramah."
     try:
         response = gemini_client.models.generate_content(

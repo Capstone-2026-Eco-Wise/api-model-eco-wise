@@ -1,7 +1,3 @@
 {
-  "class_names": [
-    "Anorganik",
-    "B3",
-    "Organik"
-  ]
+  "class_names": ["Anorganik", "B3", "Non-Waste", "Organik"]
 }

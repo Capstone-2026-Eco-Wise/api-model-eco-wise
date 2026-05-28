@@ -15,5 +15,6 @@ async def get_classes():
             "Anorganik": "Sampah tidak dapat terurai alami, mis. plastik, logam, kaca",
             "B3": "Bahan Berbahaya & Beracun, mis. baterai, obat, aerosol",
             "Organik": "Sampah dapat terurai alami, mis. sisa makanan, daun, kertas",
+            "Non-Waste": "Objek umum/latar belakang yang bukan termasuk kategori limbah atau sampah",
         },
     }
