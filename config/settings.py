@@ -13,12 +13,11 @@ def get_clean_env(key: str, default: str = None) -> str:
     return val
 
 
-dir_path = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-MODEL_PATH = os.path.join(dir_path, "../models/model_ecowise_production.keras")
-CLASS_NAMES_PATH = os.path.join(dir_path, "../class_names.json")
-raw_max_size = get_clean_env("MAX_FILE_SIZE_MB", "10")
+MODEL_PATH = os.path.join(BASE_DIR, "..", "models", "model_ecowise_production.keras")
+CLASS_NAMES_PATH = os.path.join(BASE_DIR, "..", "class_names.json")
+raw_max_size = get_clean_env("MAX_FILE_SIZE_MB", "5")
 MAX_FILE_SIZE_MB = int(raw_max_size) if raw_max_size.isdigit() else 5
-
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 GEMINI_API_KEY = get_clean_env("GEMINI_API_KEY")
